@@ -34,5 +34,5 @@ public class Produto {
     private LocalDate dataVendaProduto;
     private LocalDate dataFabricacaoProduto;  
 
-    
+    //falta colocar a estrangeira ESTOQUE
 }
