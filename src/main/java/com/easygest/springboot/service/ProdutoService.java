@@ -1,6 +1,6 @@
 package com.easygest.springboot.service;
 
-
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,40 +11,73 @@ import com.easygest.springboot.repository.ProdutoRepository;
 
 @Service
 public class ProdutoService {
+
     @Autowired
-   private ProdutoRepository produtoRepository;
+    private ProdutoRepository produtoRepository;
 
-   public List<Produto> listarTodos(){
+    // LISTAR TODOS
+    public List<Produto> listarTodos() {
         return produtoRepository.findAll();
-   }
+    }
 
-   public Produto salvar(Produto produto){
+    // SALVAR
+    public Produto salvar(Produto produto) {
+
+        verificarEstoque(produto);
+
         return produtoRepository.save(produto);
-   }
+    }
 
-   public Produto buscarPorCod(Long codProduto){
-    return produtoRepository.findById(codProduto).orElse(null);
-   }
+    // BUSCAR POR CÓDIGO
+    public Produto buscarPorCod(Long codProduto) {
 
-   public Produto atualizar(Long codProduto, Produto novo){
-    Produto existente = buscarPorCod(codProduto);
+        return produtoRepository.findById(codProduto)
+                .orElseThrow(() ->
+                        new RuntimeException("Produto não encontrado."));
+    }
 
-    existente.setNomeProduto(novo.getNomeProduto());
-    existente.setTipoProduto(novo.getTipoProduto());
-    existente.setPesoProduto(novo.getPesoProduto());
-    existente.setCustoProduto(novo.getCustoProduto());
-    existente.setPrecoProduto(novo.getPrecoProduto());
-    existente.setStatusProduto(novo.getStatusProduto());
-    existente.setDataCompraProduto(novo.getDataCompraProduto());
-    existente.setDataValidadeProduto(novo.getDataValidadeProduto());
-    existente.setDataVendaProduto(novo.getDataVendaProduto());
-    existente.setDataFabricacaoProduto(novo.getDataFabricacaoProduto());
+    // ATUALIZAR
+    public Produto atualizar(Long codProduto, Produto novo) {
 
-    return produtoRepository.save(existente);
-   }
-    
-   public void excluir(Long codProduto){
-    produtoRepository.deleteById(codProduto);
-   }
+        Produto existente = buscarPorCod(codProduto);
+
+        existente.setNomeProduto(novo.getNomeProduto());
+        existente.setTipoProduto(novo.getTipoProduto());
+        existente.setPesoProduto(novo.getPesoProduto());
+        existente.setCustoProduto(novo.getCustoProduto());
+        existente.setPrecoProduto(novo.getPrecoProduto());
+        existente.setStatusProduto(novo.getStatusProduto());
+        existente.setDataCompraProduto(novo.getDataCompraProduto());
+        existente.setDataValidadeProduto(novo.getDataValidadeProduto());
+        existente.setDataVendaProduto(novo.getDataVendaProduto());
+        existente.setDataFabricacaoProduto(novo.getDataFabricacaoProduto());
+
+        // CAMPOS DE ESTOQUE
+        existente.setQuantidadeAtual(novo.getQuantidadeAtual());
+        existente.setEstoqueMinimo(novo.getEstoqueMinimo());
+
+        verificarEstoque(existente);
+
+        return produtoRepository.save(existente);
+    }
+
+    // EXCLUIR
+    public void excluir(Long codProduto) {
+
+        produtoRepository.deleteById(codProduto);
+    }
+
+    // REGRA DE NEGÓCIO
+    private void verificarEstoque(Produto produto) {
+
+        if (produto.getQuantidadeAtual() != null
+                && produto.getEstoqueMinimo() != null
+                && produto.getQuantidadeAtual().compareTo(
+                        BigDecimal.valueOf(produto.getEstoqueMinimo())) < 0) {
+
+            System.out.println(
+                    "ALERTA: Estoque baixo para o produto "
+                            + produto.getNomeProduto());
+        }
+    }
 }
-
